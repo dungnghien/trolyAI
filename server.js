@@ -52,8 +52,7 @@ function buildPrompt(filename, text) {
   return `
 Bạn là AI phân tích văn bản hành chính Việt Nam.
 
-Hãy trích xuất chính xác các trường:
-{
+Hãy trích xuất chính xác các trường và trả về json hợp lệ. Chỉ trả về json, không giải thích thêm.\n{
  "so_hieu":"",
  "ngay_ban_hanh":"",
  "noi_dung":"",
@@ -75,38 +74,65 @@ ${text ? "Nội dung văn bản đã đọc được:\n" + text.slice(0, 15000) 
 }
 
 async function callOpenAIResponses(payload) {
-  const res = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + process.env.OPENAI_API_KEY,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
+  async function doRequest(body) {
+    const res = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + process.env.OPENAI_API_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
 
-  const data = await res.json().catch(() => ({}));
+    const data = await res.json().catch(() => ({}));
 
-  if (!res.ok) {
-    throw new Error(data.error?.message || "OpenAI API lỗi HTTP " + res.status);
+    if (!res.ok) {
+      const msg = data.error?.message || "OpenAI API lỗi HTTP " + res.status;
+      throw new Error(msg);
+    }
+
+    let text = data.output_text;
+
+    if (!text && Array.isArray(data.output)) {
+      for (const item of data.output) {
+        if (Array.isArray(item.content)) {
+          for (const c of item.content) {
+            if (c.text) { text = c.text; break; }
+            if (c.type === "output_text" && c.text) { text = c.text; break; }
+          }
+        }
+        if (text) break;
+      }
+    }
+
+    if (!text) throw new Error("AI không trả về nội dung.");
+    return text.replace(/```json|```/gi, "").trim();
   }
 
-  let text = data.output_text;
+  try {
+    const text = await doRequest(payload);
+    return JSON.parse(text);
+  } catch (err) {
+    // Fallback cho lỗi: "messages must contain the word 'json'"
+    if (String(err.message).toLowerCase().includes("must contain the word") || String(err.message).toLowerCase().includes("json")) {
+      const fallbackPayload = JSON.parse(JSON.stringify(payload));
+      delete fallbackPayload.text;
 
-  if (!text && Array.isArray(data.output)) {
-    for (const item of data.output) {
-      if (Array.isArray(item.content)) {
-        for (const c of item.content) {
-          if (c.text) { text = c.text; break; }
-          if (c.type === "output_text" && c.text) { text = c.text; break; }
+      // Ép prompt có chữ json thường ở mọi input_text
+      for (const item of fallbackPayload.input || []) {
+        for (const c of item.content || []) {
+          if (c.type === "input_text") {
+            c.text = "Bạn bắt buộc chỉ trả về json hợp lệ, không markdown, không giải thích. json output only.\n\n" + c.text;
+          }
         }
       }
-      if (text) break;
-    }
-  }
 
-  if (!text) throw new Error("AI không trả về nội dung.");
-  text = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(text);
+      const text = await doRequest(fallbackPayload);
+      const cleaned = text.replace(/^[\s\S]*?({[\s\S]*})[\s\S]*$/m, "$1");
+      return JSON.parse(cleaned);
+    }
+    throw err;
+  }
 }
 
 async function aiExtract(file, extractedText) {
@@ -181,7 +207,7 @@ app.get("/api/health", (req, res) => {
     ok: true,
     hasOpenAI: Boolean(process.env.OPENAI_API_KEY),
     hasSupabase: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
-    mode: "V13_SUPABASE_FILE_AI",
+    mode: "V14_FIX_JSON_OBJECT",
     model: process.env.OPENAI_MODEL || "gpt-4o-mini",
     maxFileMB: 25
   });
