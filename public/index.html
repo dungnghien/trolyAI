@@ -1,0 +1,286 @@
+
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tổ Cảnh sát Phòng, chống tội phạm - Công an xã Hát Môn</title>
+<style>
+:root{--primary:#175cd3;--dark:#0b2f6b;--bg:#f5f7fb;--border:#d0d5dd;--text:#182230;--gold:#ffd166}
+body{font-family:Arial,sans-serif;background:var(--bg);margin:0;color:var(--text)}
+.banner{background:linear-gradient(135deg,#8b0000,#c1121f 48%,#0b2f6b);color:#fff;padding:22px 20px;border-bottom:5px solid var(--gold)}
+.banner .top{font-size:15px;text-transform:uppercase;letter-spacing:.5px;opacity:.95}
+.banner h1{margin:8px 0 4px;font-size:28px;line-height:1.25;text-transform:uppercase}
+.banner p{margin:0;font-size:15px;opacity:.95}
+main{max-width:1360px;margin:20px auto;padding:0 12px}
+.card{background:#fff;padding:16px;border-radius:12px;margin-bottom:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(16,24,40,.08)}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:16px}
+input,select,button{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--border);max-width:100%}
+input[type=file]{width:100%}
+button{background:var(--primary);color:#fff;border:0;cursor:pointer;font-weight:bold}
+button.danger{background:#b42318}
+button.light{background:#eef4ff;color:#175cd3;border:1px solid #b2ccff}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+th,td{border-bottom:1px solid #eee;padding:8px;vertical-align:top}
+th{background:#f9fafb;position:sticky;top:0}
+.table-wrap{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:10px}
+td[contenteditable=true]{background:#fff}
+td[contenteditable=true]:focus{outline:2px solid #84caff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.progress{width:100%;height:18px}
+.small{color:#667085;font-size:13px;line-height:1.45}
+.notice{background:#fff7e6;border:1px solid #fedf89;padding:10px;border-radius:10px;font-size:13px;line-height:1.45}
+.status{white-space:pre-wrap}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .table-wrap{max-height:none}
+  table{font-size:12px}
+  .banner h1{font-size:20px}
+}
+</style>
+</head>
+<body>
+<header class="banner">
+  <div class="top">Công an xã Hát Môn</div>
+  <h1>Tổ Cảnh sát Phòng, chống tội phạm</h1>
+  <p>Hệ thống quản lý văn bản đến - phân tích AI, theo dõi xử lý, backup CSV</p>
+</header>
+
+<main class="grid">
+<section class="card">
+<h2>Upload nhiều file</h2>
+<input id="files" type="file" multiple accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp">
+<p class="small">Hỗ trợ PDF có chữ, DOCX, TXT; với PDF scan/ảnh, app sẽ gửi file gốc cho AI đọc trực tiếp. Ghi chú để trống để bạn nhập thủ công.</p>
+<button onclick="upload()">Upload và phân tích</button>
+<p id="status" class="small status">Sẵn sàng.</p>
+<progress id="progress" value="0" max="100" class="progress"></progress>
+
+<hr>
+<h2>Backup dữ liệu</h2>
+<button class="light" onclick="exportCSV()">Xuất CSV</button>
+<br><br>
+<input type="file" id="csvInput" accept=".csv">
+<button class="light" onclick="importCSV()">Nhập CSV</button>
+
+<hr>
+<h2>Tìm kiếm</h2>
+<input id="search" placeholder="Tìm số hiệu, nội dung, cán bộ..." oninput="render()">
+<br><br>
+<select id="statusFilter" onchange="render()">
+<option value="">Tất cả trạng thái</option>
+<option>Chưa xử lý</option>
+<option>Đang xử lý</option>
+<option>Đã hoàn thành</option>
+<option>Quá hạn</option>
+</select>
+
+<hr>
+<h2>Truy cập từ thiết bị khác</h2>
+<div class="notice">
+<b>Nếu đã deploy lên Render:</b><br>
+Mở trực tiếp link Render dạng <b>https://ten-app.onrender.com</b> trên điện thoại/máy tính bảng.<br><br>
+<b>Nếu chạy trên máy tính nội bộ:</b><br>
+Điện thoại phải cùng Wi‑Fi, rồi mở <b>http://IP-máy-tính:3000</b>.
+</div>
+</section>
+
+<section class="card">
+<h2>Dữ liệu văn bản</h2>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>STT</th>
+<th>Số hiệu</th>
+<th>Ngày ban hành</th>
+<th>Nội dung</th>
+<th>Thời hạn</th>
+<th>Cán bộ</th>
+<th>Trạng thái</th>
+<th>Ghi chú</th>
+<th>Xóa</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</section>
+</main>
+
+<datalist id="officerList">
+<option value="Nguyễn Dũng"></option>
+<option value="Phương Đạt"></option>
+<option value="Công Cường"></option>
+<option value="Thiều Cường"></option>
+<option value="Phan Kiên"></option>
+<option value="Tùng Long"></option>
+<option value="Văn Tuấn"></option>
+<option value="Minh Khương"></option>
+<option value="Ngọc Chung"></option>
+<option value="Hoàng Hải"></option>
+<option value="Huyền Trang"></option>
+<option value="Văn Tiến"></option>
+<option value="Quang Hoàng"></option>
+<option value="Duy Thắng"></option>
+<option value="Lê Thuỷ"></option>
+</datalist>
+
+<script>
+const officers = ["Nguyễn Dũng", "Phương Đạt", "Công Cường", "Thiều Cường", "Phan Kiên", "Tùng Long", "Văn Tuấn", "Minh Khương", "Ngọc Chung", "Hoàng Hải", "Huyền Trang", "Văn Tiến", "Quang Hoàng", "Duy Thắng", "Lê Thuỷ"];
+let records = [];
+
+async function load(){
+  const res = await fetch("/api/records");
+  records = await res.json();
+  render();
+}
+
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+function render(){
+  const q = document.getElementById("search").value.toLowerCase().trim();
+  const st = document.getElementById("statusFilter").value;
+  const filtered = records.filter(r=>{
+    const text = [r.so_hieu,r.ngay_ban_hanh,r.noi_dung,r.thoi_han,r.can_bo,r.trang_thai,r.ghi_chu].join(" ").toLowerCase();
+    return (!q || text.includes(q)) && (!st || r.trang_thai === st);
+  });
+
+  document.getElementById("tbody").innerHTML = filtered.map((r,i)=>`
+    <tr data-id="${r.id}">
+      <td>${i+1}</td>
+      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.so_hieu)}</td>
+      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.ngay_ban_hanh)}</td>
+      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.noi_dung)}</td>
+      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.thoi_han)}</td>
+      <td><input list="officerList" value="${escapeHtml(r.can_bo)}" onchange="saveRow(${r.id})" onblur="saveRow(${r.id})" placeholder="Chọn hoặc nhập tên"></td>
+      <td>
+        <select onchange="saveRow(${r.id})">
+          ${["Chưa xử lý","Đang xử lý","Đã hoàn thành","Quá hạn"].map(x=>`<option ${r.trang_thai===x?"selected":""}>${x}</option>`).join("")}
+        </select>
+      </td>
+      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.ghi_chu)}</td>
+      <td><button class="danger" onclick="deleteRow(${r.id})">Xóa</button></td>
+    </tr>
+  `).join("") || `<tr><td colspan="9">Chưa có dữ liệu.</td></tr>`;
+}
+
+
+async function checkHealth(){
+  try{
+    const res = await fetch("/api/health", {cache:"no-store"});
+    if(!res.ok) throw new Error("Server trả lỗi " + res.status);
+    return await res.json();
+  }catch(err){
+    throw new Error("Không kết nối được server. Nếu dùng Render, hãy mở lại link và chờ server thức dậy; nếu chạy local, kiểm tra npm start.");
+  }
+}
+
+async function upload(){
+  const files = Array.from(document.getElementById("files").files || []);
+  if(!files.length) return alert("Chưa chọn file.");
+
+  try{
+    const health = await checkHealth();
+    if(!health.hasApiKey){
+      document.getElementById("status").innerText = "Server chưa có OPENAI_API_KEY. Hãy đặt Environment Variable trên Render.";
+      return;
+    }
+  }catch(err){
+    document.getElementById("status").innerText = err.message;
+    return;
+  }
+
+  let ok = 0;
+  let fail = 0;
+  let errors = [];
+
+  document.getElementById("progress").value = 0;
+
+  for(let i=0;i<files.length;i++){
+    const file = files[i];
+    document.getElementById("status").innerText = `Đang xử lý ${i+1}/${files.length}: ${file.name}`;
+    document.getElementById("progress").value = Math.round((i / files.length) * 100);
+
+    const fd = new FormData();
+    fd.append("file", file);
+
+    try{
+      const res = await fetch("/api/upload-one", {method:"POST", body:fd});
+      const data = await res.json().catch(()=>({error:"Server không trả JSON"}));
+
+      if(!res.ok){
+        fail++;
+        errors.push(`${file.name}: ${data.error || "Không rõ lỗi"}`);
+      }else{
+        ok++;
+      }
+    }catch(err){
+      fail++;
+      errors.push(`${file.name}: Failed to fetch. Có thể file quá lớn, server Render đang ngủ/crash, hoặc mạng không ổn định.`);
+    }
+  }
+
+  document.getElementById("progress").value = 100;
+  document.getElementById("status").innerText =
+    `Hoàn thành.\nThành công: ${ok}\nLỗi: ${fail}` + (errors.length ? "\n" + errors.join("\n") : "");
+
+  document.getElementById("files").value = "";
+  await load();
+}
+
+async function saveRow(id){
+  const tr = document.querySelector(`tr[data-id="${id}"]`);
+  if(!tr) return;
+  const cells = tr.children;
+  const data = {
+    so_hieu: cells[1].innerText.trim(),
+    ngay_ban_hanh: cells[2].innerText.trim(),
+    noi_dung: cells[3].innerText.trim(),
+    thoi_han: cells[4].innerText.trim(),
+    can_bo: cells[5].querySelector("input").value.trim(),
+    trang_thai: cells[6].querySelector("select").value,
+    ghi_chu: cells[7].innerText.trim()
+  };
+  await fetch("/api/records/"+id,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(data)
+  });
+  const r = records.find(x=>x.id===id);
+  if(r) Object.assign(r, data);
+}
+
+async function deleteRow(id){
+  if(!confirm("Xóa dòng này?")) return;
+  await fetch("/api/records/"+id,{method:"DELETE"});
+  await load();
+}
+
+function exportCSV(){
+  window.location.href = "/api/export-csv";
+}
+
+async function importCSV(){
+  const file = document.getElementById("csvInput").files[0];
+  if(!file) return alert("Chưa chọn CSV.");
+  const text = await file.text();
+  const res = await fetch("/api/import-csv",{
+    method:"POST",
+    headers:{"Content-Type":"text/plain"},
+    body:text
+  });
+  const data = await res.json();
+  if(!res.ok) return alert("Lỗi import: " + data.error);
+  alert("Đã import " + (data.imported || 0) + " dòng.");
+  document.getElementById("csvInput").value = "";
+  await load();
+}
+
+load().catch(err=>{
+  document.getElementById("status").innerText = "Không tải được dữ liệu: " + err.message;
+});
+</script>
+</body>
+</html>
