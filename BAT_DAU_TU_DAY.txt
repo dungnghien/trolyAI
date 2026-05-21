@@ -1,0 +1,64 @@
+BẮT ĐẦU LẠI VỚI BẢN V9 - CÁCH LÀM ĐƠN GIẢN
+
+Mục tiêu bước này:
+- Chỉ chạy trên máy tính trước.
+- Chưa deploy Render.
+- Khi chạy ổn rồi mới đưa lên online.
+
+CÁCH CHẠY
+
+1. Giải nén toàn bộ ZIP.
+2. Double-click file:
+   CHAY_APP.bat
+
+3. Nếu Notepad mở file config.env:
+   Dán API key vào dòng:
+
+   OPENAI_API_KEY=sk-...
+
+4. Lưu file config.env rồi đóng Notepad.
+
+5. Double-click lại:
+   CHAY_APP.bat
+
+6. Trình duyệt sẽ mở:
+
+   http://localhost:3000
+
+KHÔNG mở trực tiếp:
+- public/index.html
+- index.html
+- file://...
+
+CHỨC NĂNG BẢN V9
+
+- Banner: Tổ Cảnh sát Phòng, chống tội phạm Công an xã Hát Môn
+- Upload nhiều file theo hàng đợi từng file
+- Hỗ trợ PDF, DOCX, TXT, JPG, PNG, WEBP
+- Nếu PDF scan/ảnh không đọc được text, gửi file gốc cho AI đọc
+- AI trích:
+  + Số hiệu
+  + Ngày ban hành
+  + Nội dung
+  + Thời hạn
+- Cán bộ: chọn từ danh sách hoặc nhập tay
+- Trạng thái: nhập/chọn thủ công
+- Ghi chú: để trống, người dùng nhập thủ công
+- Xuất CSV
+- Nhập CSV restore
+- Lưu SQLite trong thư mục data
+
+KIỂM TRA SERVER
+
+Sau khi chạy, mở:
+
+http://localhost:3000/api/health
+
+Nếu thấy:
+hasApiKey: true
+
+là đúng.
+
+KHI NÀO CHẠY LOCAL ỔN
+
+Sau đó mới làm tiếp bước deploy Render online.

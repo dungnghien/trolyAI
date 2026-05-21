@@ -1,0 +1,20 @@
+
+create table if not exists public.records (
+  id bigint generated always as identity primary key,
+  so_hieu text,
+  ngay_ban_hanh text,
+  noi_dung text,
+  thoi_han text,
+  can_bo text,
+  trang_thai text,
+  ghi_chu text,
+  created_at timestamptz default now()
+);
+
+alter table public.records enable row level security;
+
+create policy "Allow all"
+on public.records
+for all
+using (true)
+with check (true);
