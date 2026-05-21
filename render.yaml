@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: van-ban-den-ai
+    name: tro-ly-ai-dung-nguyen
     runtime: node
     plan: free
     buildCommand: npm install
@@ -10,3 +10,15 @@ services:
         sync: false
       - key: OPENAI_MODEL
         value: gpt-4o-mini
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: GOOGLE_DRIVE_FOLDER_ID
+        sync: false
+      - key: APP_USERNAME
+        sync: false
+      - key: APP_PASSWORD
+        sync: false

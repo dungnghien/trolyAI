@@ -1,396 +1,51 @@
 
-<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tổ Cảnh sát Phòng, chống tội phạm - Công an xã Hát Môn</title>
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trợ lý AI của Dũng Nguyễn</title>
 <style>
-:root{--primary:#175cd3;--dark:#0b2f6b;--bg:#f5f7fb;--border:#d0d5dd;--text:#182230;--gold:#ffd166}
-body{font-family:Arial,sans-serif;background:var(--bg);margin:0;color:var(--text)}
-.banner{background:linear-gradient(135deg,#8b0000,#c1121f 48%,#0b2f6b);color:#fff;padding:22px 20px;border-bottom:5px solid var(--gold)}
-.banner .top{font-size:15px;text-transform:uppercase;letter-spacing:.5px;opacity:.95}
-.banner h1{margin:8px 0 4px;font-size:28px;line-height:1.25;text-transform:uppercase}
-.banner p{margin:0;font-size:15px;opacity:.95}
-main{max-width:1360px;margin:20px auto;padding:0 12px}
-.card{background:#fff;padding:16px;border-radius:12px;margin-bottom:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(16,24,40,.08)}
-.grid{display:grid;grid-template-columns:380px 1fr;gap:16px}
-input,select,button{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--border);max-width:100%}
-input[type=file]{width:100%}
-button{background:var(--primary);color:#fff;border:0;cursor:pointer;font-weight:bold}
-button.danger{background:#b42318}
-button.light{background:#eef4ff;color:#175cd3;border:1px solid #b2ccff}
-table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
-th,td{border-bottom:1px solid #eee;padding:8px;vertical-align:top}
-th{background:#f9fafb;position:sticky;top:0}
-.table-wrap{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:10px}
-td[contenteditable=true]{background:#fff}
-td[contenteditable=true]:focus{outline:2px solid #84caff}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.progress{width:100%;height:18px}
-.small{color:#667085;font-size:13px;line-height:1.45}
-.notice{background:#fff7e6;border:1px solid #fedf89;padding:10px;border-radius:10px;font-size:13px;line-height:1.45}
-.status{white-space:pre-wrap}
-@media(max-width:900px){
-  .grid{grid-template-columns:1fr}
-  .table-wrap{max-height:none}
-  table{font-size:12px}
-  .banner h1{font-size:20px}
-}
-</style>
-</head>
-<body>
-<header class="banner">
-  <div class="top">Công an xã Hát Môn</div>
-  <h1>Tổ Cảnh sát Phòng, chống tội phạm</h1>
-  <p>Hệ thống quản lý văn bản đến - phân tích AI, theo dõi xử lý, backup CSV</p>
-</header>
-
-<main class="grid">
-<section class="card">
-<h2>Upload nhiều file</h2>
-<input id="files" type="file" multiple accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp">
-<p class="small">Hỗ trợ PDF có chữ, DOCX, TXT; với PDF scan/ảnh, app sẽ gửi file gốc cho AI đọc trực tiếp. Ghi chú để trống để bạn nhập thủ công.</p>
-<button onclick="upload()">Upload và phân tích</button>
-<p id="status" class="small status">Sẵn sàng.</p>
-<progress id="progress" value="0" max="100" class="progress"></progress>
-
-<hr>
-<h2>Backup dữ liệu</h2>
-<button class="light" onclick="exportCSV()">Xuất CSV</button>
-<br><br>
-<input type="file" id="csvInput" accept=".csv">
-<button class="light" onclick="importCSV()">Nhập CSV</button>
-
-<hr>
-<h2>Tìm kiếm</h2>
-<input id="search" placeholder="Tìm số hiệu, nội dung, cán bộ..." oninput="render()">
-<br><br>
-<select id="statusFilter" onchange="render()">
-<option value="">Tất cả trạng thái</option>
-<option>Chưa xử lý</option>
-<option>Đang xử lý</option>
-<option>Đã hoàn thành</option>
-<option>Quá hạn</option>
-</select>
-
-<hr>
-<h2>Truy cập từ thiết bị khác</h2>
-<div class="notice">
-<b>Nếu đã deploy lên Render:</b><br>
-Mở trực tiếp link Render dạng <b>https://ten-app.onrender.com</b> trên điện thoại/máy tính bảng.<br><br>
-<b>Nếu chạy trên máy tính nội bộ:</b><br>
-Điện thoại phải cùng Wi‑Fi, rồi mở <b>http://IP-máy-tính:3000</b>.
-</div>
-</section>
-
-<section class="card">
-<h2>Dữ liệu văn bản</h2>
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-<th>STT</th>
-<th>Số hiệu</th>
-<th>Ngày ban hành</th>
-<th>Nội dung</th>
-<th>Thời hạn</th>
-<th>Cán bộ</th>
-<th>Trạng thái</th>
-<th>Ghi chú</th>
-<th>Xóa</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-</div>
-</section>
-</main>
-
-<datalist id="officerList">
-<option value="Nguyễn Dũng"></option>
-<option value="Phương Đạt"></option>
-<option value="Công Cường"></option>
-<option value="Thiều Cường"></option>
-<option value="Phan Kiên"></option>
-<option value="Tùng Long"></option>
-<option value="Văn Tuấn"></option>
-<option value="Minh Khương"></option>
-<option value="Ngọc Chung"></option>
-<option value="Hoàng Hải"></option>
-<option value="Huyền Trang"></option>
-<option value="Văn Tiến"></option>
-<option value="Quang Hoàng"></option>
-<option value="Duy Thắng"></option>
-<option value="Lê Thuỷ"></option>
-</datalist>
-
+:root{--p:#175cd3;--b:#f5f7fb;--bd:#d0d5dd;--d:#b42318}body{font-family:Arial;margin:0;background:var(--b);color:#182230}.banner{background:linear-gradient(135deg,#8b0000,#c1121f 48%,#0b2f6b);color:white;padding:24px 20px;border-bottom:5px solid #ffd166}.banner h1{margin:8px 0 4px;text-transform:uppercase}.banner p{margin:0}.wrap{max-width:1550px;margin:20px auto;padding:0 12px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tab{background:#eef4ff;color:#175cd3;border:1px solid #b2ccff}.tab.active{background:#175cd3;color:#fff}.grid{display:grid;grid-template-columns:390px 1fr;gap:16px}.card{background:white;border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}input,select,button,textarea{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--bd);box-sizing:border-box;max-width:100%}input[type=file],textarea{width:100%}textarea{min-height:120px}button{background:var(--p);color:#fff;border:0;font-weight:bold;cursor:pointer}.light{background:#eef4ff;color:#175cd3;border:1px solid #b2ccff}.danger{background:var(--d)}table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-bottom:1px solid #eee;padding:8px;vertical-align:top}th{background:#f9fafb;position:sticky;top:0}.table-wrap{overflow:auto;max-height:72vh;border:1px solid var(--bd);border-radius:10px}.small{font-size:13px;color:#667085}.status{white-space:pre-wrap}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f8fafc;border:1px solid var(--bd);border-radius:10px;padding:10px}.stat b{font-size:20px;display:block}.hidden{display:none}.login{display:none;background:#fff;border:1px solid var(--bd);border-radius:12px;padding:16px;max-width:420px;margin:40px auto}.source,.answer{background:#f8fafc;border:1px solid var(--bd);border-radius:10px;padding:12px;margin:8px 0;white-space:pre-wrap}.officerRow{display:flex;gap:6px;flex-wrap:wrap}.officerRow select{min-width:165px}.officerRow input{min-width:150px;flex:1}@media(max-width:950px){.grid{grid-template-columns:1fr}.banner h1{font-size:22px}.stats{grid-template-columns:repeat(2,1fr)}table{font-size:12px}.officerRow{display:block}.officerRow select,.officerRow input{width:100%;margin-bottom:6px}}
+</style></head><body>
+<header class="banner"><div>Công an xã Hát Môn</div><h1>Trợ lý AI của Dũng Nguyễn</h1><p>Quản lý văn bản đến + Tra cứu pháp luật</p></header>
+<div id="loginBox" class="login"><h2>Đăng nhập</h2><input id="usernameInput" placeholder="Tài khoản"><br><br><input id="passwordInput" type="password" placeholder="Mật khẩu"><br><br><button onclick="saveLogin()">Vào ứng dụng</button></div>
+<main id="appMain" class="wrap"><div class="tabs"><button id="tabDocs" class="tab active" onclick="showTab('docs')">Quản lý văn bản đến</button><button id="tabLegal" class="tab" onclick="showTab('legal')">Tra cứu pháp luật</button></div>
+<section id="docsPanel" class="grid"><section class="card"><h2>Upload nhiều file</h2><input id="files" type="file" multiple accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp"><p class="small">Ngày nhận tự động theo ngày upload.</p><button onclick="upload()">Upload và phân tích</button><p id="status" class="small status">Đang kiểm tra server...</p><progress id="progress" value="0" max="100" style="width:100%"></progress><hr><p id="serverStatus" class="small">Đang kiểm tra...</p><button class="light" onclick="manualHealthCheck()">Kiểm tra lại</button><hr><h2>Backup</h2><button class="light" onclick="exportCSV()">Xuất CSV</button><br><br><input type="file" id="csvInput" accept=".csv"><button class="light" onclick="importCSV()">Nhập CSV</button><hr><h2>Tìm kiếm & lọc</h2><input id="search" placeholder="Tìm kiếm..." oninput="render()"><br><br><select id="statusFilter" onchange="render()"><option value="">Tất cả trạng thái</option><option>Chưa xử lý</option><option>Đang xử lý</option><option>Đã hoàn thành</option><option>Quá hạn</option></select><br><br><select id="officerFilter" onchange="render()"><option value="">Tất cả cán bộ</option><option>Nguyễn Dũng</option>
+<option>Phương Đạt</option>
+<option>Công Cường</option>
+<option>Thiều Cường</option>
+<option>Phan Kiên</option>
+<option>Tùng Long</option>
+<option>Văn Tuấn</option>
+<option>Minh Khương</option>
+<option>Ngọc Chung</option>
+<option>Hoàng Hải</option>
+<option>Huyền Trang</option>
+<option>Văn Tiến</option>
+<option>Quang Hoàng</option>
+<option>Duy Thắng</option>
+<option>Lê Thuỷ</option></select><br><br><button class="light" onclick="clearFilters()">Xóa lọc</button></section>
+<section class="card"><h2>Dữ liệu văn bản</h2><div class="stats"><div class="stat"><b id="stTotal">0</b><span>Tổng</span></div><div class="stat"><b id="stTodo">0</b><span>Chưa xử lý</span></div><div class="stat"><b id="stDoing">0</b><span>Đang xử lý</span></div><div class="stat"><b id="stDone">0</b><span>Hoàn thành</span></div></div><br><div class="table-wrap"><table><thead><tr><th>STT</th><th>Số hiệu<br><span class="small">Ngày ban hành</span></th><th>Ngày nhận</th><th>Nội dung</th><th>Thời hạn</th><th>Cán bộ</th><th>Trạng thái</th><th>Ghi chú</th><th>Tra cứu</th><th>Xóa</th></tr></thead><tbody id="tbody"></tbody></table></div></section></section>
+<section id="legalPanel" class="hidden"><div class="grid"><section class="card"><h2>Kho pháp luật Google Drive</h2><p class="small">Tạo 4 thư mục: Pháp luật hình sự; Xử lý vi phạm hành chính; Tố tụng hình sự; Khác.</p><button onclick="syncLegal()">Đồng bộ từ Google Drive</button><p id="legalStatus" class="small status">Chưa đồng bộ.</p><hr><h2>Hỏi pháp luật</h2><select id="legalCategory"><option>Tất cả</option><option>Pháp luật hình sự</option><option>Xử lý vi phạm hành chính</option><option>Tố tụng hình sự</option><option>Khác</option></select><br><br><textarea id="legalQuestion" placeholder="Nhập câu hỏi pháp luật..."></textarea><br><br><button onclick="askLegal()">Tra cứu AI</button></section><section class="card"><h2>Kết quả</h2><div id="legalAnswer" class="answer">Nhập câu hỏi và bấm Tra cứu AI.</div><h3>Nguồn liên quan</h3><div id="legalSources"></div><hr><h3>Văn bản đã đồng bộ</h3><button class="light" onclick="loadLegalDocs()">Tải danh sách</button><div id="legalDocs" class="small"></div></section></div></section></main>
 <script>
-const officers = ["Nguyễn Dũng", "Phương Đạt", "Công Cường", "Thiều Cường", "Phan Kiên", "Tùng Long", "Văn Tuấn", "Minh Khương", "Ngọc Chung", "Hoàng Hải", "Huyền Trang", "Văn Tiến", "Quang Hoàng", "Duy Thắng", "Lê Thuỷ"];
-let records = [];
-
-async function load(){
-  const res = await fetch("/api/records");
-  records = await res.json();
-  render();
-}
-
-function escapeHtml(s){
-  return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-}
-
-function render(){
-  const q = document.getElementById("search").value.toLowerCase().trim();
-  const st = document.getElementById("statusFilter").value;
-  const filtered = records.filter(r=>{
-    const text = [r.so_hieu,r.ngay_ban_hanh,r.noi_dung,r.thoi_han,r.can_bo,r.trang_thai,r.ghi_chu].join(" ").toLowerCase();
-    return (!q || text.includes(q)) && (!st || r.trang_thai === st);
-  });
-
-  document.getElementById("tbody").innerHTML = filtered.map((r,i)=>`
-    <tr data-id="${r.id}">
-      <td>${i+1}</td>
-      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.so_hieu)}</td>
-      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.ngay_ban_hanh)}</td>
-      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.noi_dung)}</td>
-      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.thoi_han)}</td>
-      <td><input list="officerList" value="${escapeHtml(r.can_bo)}" onchange="saveRow(${r.id})" onblur="saveRow(${r.id})" placeholder="Chọn hoặc nhập tên"></td>
-      <td>
-        <select onchange="saveRow(${r.id})">
-          ${["Chưa xử lý","Đang xử lý","Đã hoàn thành","Quá hạn"].map(x=>`<option ${r.trang_thai===x?"selected":""}>${x}</option>`).join("")}
-        </select>
-      </td>
-      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.ghi_chu)}</td>
-      <td><button class="danger" onclick="deleteRow(${r.id})">Xóa</button></td>
-    </tr>
-  `).join("") || `<tr><td colspan="9">Chưa có dữ liệu.</td></tr>`;
-}
-
-
-async function checkHealth(){
-  try{
-    const res = await fetch("/api/health", {cache:"no-store"});
-    if(!res.ok) throw new Error("Server trả lỗi " + res.status);
-    return await res.json();
-  }catch(err){
-    throw new Error("Không kết nối được server. Nếu dùng Render, hãy mở lại link và chờ server thức dậy; nếu chạy local, kiểm tra npm start.");
-  }
-}
-
-async function upload(){
-  const files = Array.from(document.getElementById("files").files || []);
-  if(!files.length) return alert("Chưa chọn file.");
-
-  try{
-    const health = await checkHealth();
-    if(!healt(h.hasOpenAI || h.hasApiKey)){
-      document.getElementById("status").innerText = "Đang kiểm tra kết nối AI...";
-      return;
-    }
-  }catch(err){
-    document.getElementById("status").innerText = err.message;
-    return;
-  }
-
-  let ok = 0;
-  let fail = 0;
-  let errors = [];
-
-  document.getElementById("progress").value = 0;
-
-  for(let i=0;i<files.length;i++){
-    const file = files[i];
-    document.getElementById("status").innerText = `Đang xử lý ${i+1}/${files.length}: ${file.name}`;
-    document.getElementById("progress").value = Math.round((i / files.length) * 100);
-
-    const fd = new FormData();
-    fd.append("file", file);
-
-    try{
-      const res = await fetch("/api/upload-one", {method:"POST", body:fd});
-      const data = await res.json().catch(()=>({error:"Server không trả JSON"}));
-
-      if(!res.ok){
-        fail++;
-        errors.push(`${file.name}: ${data.error || "Không rõ lỗi"}`);
-      }else{
-        ok++;
-      }
-    }catch(err){
-      fail++;
-      errors.push(`${file.name}: Failed to fetch. Có thể file quá lớn, server Render đang ngủ/crash, hoặc mạng không ổn định.`);
-    }
-  }
-
-  document.getElementById("progress").value = 100;
-  document.getElementById("status").innerText =
-    `Hoàn thành.\nThành công: ${ok}\nLỗi: ${fail}` + (errors.length ? "\n" + errors.join("\n") : "");
-
-  document.getElementById("files").value = "";
-  await load();
-}
-
-async function saveRow(id){
-  const tr = document.querySelector(`tr[data-id="${id}"]`);
-  if(!tr) return;
-  const cells = tr.children;
-  const data = {
-    so_hieu: cells[1].innerText.trim(),
-    ngay_ban_hanh: cells[2].innerText.trim(),
-    noi_dung: cells[3].innerText.trim(),
-    thoi_han: cells[4].innerText.trim(),
-    can_bo: cells[5].querySelector("input").value.trim(),
-    trang_thai: cells[6].querySelector("select").value,
-    ghi_chu: cells[7].innerText.trim()
-  };
-  await fetch("/api/records/"+id,{
-    method:"PUT",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(data)
-  });
-  const r = records.find(x=>x.id===id);
-  if(r) Object.assign(r, data);
-}
-
-async function deleteRow(id){
-  if(!confirm("Xóa dòng này?")) return;
-  await fetch("/api/records/"+id,{method:"DELETE"});
-  await load();
-}
-
-function exportCSV(){
-  window.location.href = "/api/export-csv";
-}
-
-async function importCSV(){
-  const file = document.getElementById("csvInput").files[0];
-  if(!file) return alert("Chưa chọn CSV.");
-  const text = await file.text();
-  const res = await fetch("/api/import-csv",{
-    method:"POST",
-    headers:{"Content-Type":"text/plain"},
-    body:text
-  });
-  const data = await res.json();
-  if(!res.ok) return alert("Lỗi import: " + data.error);
-  alert("Đã import " + (data.imported || 0) + " dòng.");
-  document.getElementById("csvInput").value = "";
-  await load();
-}
-
-load().catch(err=>{
-  document.getElementById("status").innerText = "Không tải được dữ liệu: " + err.message;
-});
-</script>
-
-<script>
-// V11: tương thích cả tên cũ hasApiKey và tên mới hasOpenAI
-async function v11CheckHealthBanner(){
-  try{
-    const res = await fetch("/api/health", {cache:"no-store"});
-    const h = await res.json();
-    const hasOpenAI = !!(h.hasOpenAI || h.hasApiKey);
-    const hasSupabase = !!h.hasSupabase;
-    const statusEl = document.getElementById("status");
-    const serverEl = document.getElementById("serverStatus");
-    const msg = "Server OK. OpenAI: " + (hasOpenAI ? "đã kết nối" : "chưa có") + ". Supabase: " + (hasSupabase ? "đã kết nối" : "chưa có") + ".";
-    if(serverEl) serverEl.innerText = msg;
-    if(statusEl && statusEl.innerText.includes("OPENAI_API_KEY") && hasOpenAI) statusEl.innerText = "Sẵn sàng. " + msg;
-  }catch(e){}
-}
-window.addEventListener("load", v11CheckHealthBanner);
-</script>
-
-
-<script>
-/* V12 force-fix: chỉ dùng hasOpenAI từ /api/health, không dùng hasApiKey cũ */
-async function checkHealthV12() {
-  const res = await fetch("/api/health", { cache: "no-store" });
-  if (!res.ok) throw new Error("Không gọi được /api/health: HTTP " + res.status);
-  const h = await res.json();
-  return h;
-}
-
-async function manualHealthCheckV12() {
-  const statusEl = document.getElementById("status");
-  const serverEl = document.getElementById("serverStatus");
-  try {
-    const h = await checkHealthV12();
-    const msg = "Server OK. OpenAI: " + (h.hasOpenAI ? "đã kết nối" : "chưa có") +
-      ". Supabase: " + (h.hasSupabase ? "đã kết nối" : "chưa có") + ".";
-    if (statusEl) statusEl.innerText = msg;
-    if (serverEl) serverEl.innerText = msg;
-    return h;
-  } catch (e) {
-    const msg = "Không kiểm tra được server: " + e.message;
-    if (statusEl) statusEl.innerText = msg;
-    if (serverEl) serverEl.innerText = msg;
-    throw e;
-  }
-}
-
-// Ghi đè hàm upload cũ nếu tồn tại
-window.upload = async function uploadV12() {
-  const filesInput = document.getElementById("files");
-  const files = Array.from(filesInput?.files || []);
-  const statusEl = document.getElementById("status");
-  const progressEl = document.getElementById("progress");
-
-  if (!files.length) return alert("Chưa chọn file.");
-
-  let health;
-  try {
-    health = await checkHealthV12();
-  } catch (e) {
-    if (statusEl) statusEl.innerText = "Không kết nối được server: " + e.message;
-    return;
-  }
-
-  if (!health.hasOpenAI) {
-    if (statusEl) statusEl.innerText = "Server chưa nhận OPENAI_API_KEY. Vào Render > Environment kiểm tra OPENAI_API_KEY, Save Changes rồi Manual Deploy.";
-    return;
-  }
-
-  if (!health.hasSupabase) {
-    if (statusEl) statusEl.innerText = "Server chưa nhận SUPABASE_ANON_KEY hoặc SUPABASE_URL.";
-    return;
-  }
-
-  let ok = 0, fail = 0;
-  const errors = [];
-  if (progressEl) progressEl.value = 0;
-
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    if (statusEl) statusEl.innerText = `Đang xử lý ${i + 1}/${files.length}: ${file.name}`;
-    if (progressEl) progressEl.value = Math.round((i / files.length) * 100);
-
-    const fd = new FormData();
-    fd.append("file", file);
-
-    try {
-      const res = await fetch("/api/upload-one", { method: "POST", body: fd });
-      const data = await res.json().catch(() => ({ error: "Server không trả JSON" }));
-      if (!res.ok) {
-        fail++;
-        errors.push(`${file.name}: ${data.error || "Không rõ lỗi"}`);
-      } else {
-        ok++;
-      }
-    } catch (e) {
-      fail++;
-      errors.push(`${file.name}: ${e.message}`);
-    }
-  }
-
-  if (progressEl) progressEl.value = 100;
-  if (statusEl) statusEl.innerText = `Hoàn thành.\nThành công: ${ok}\nLỗi: ${fail}` + (errors.length ? "\n" + errors.join("\n") : "");
-  if (filesInput) filesInput.value = "";
-  if (typeof load === "function") await load();
-};
-
-window.addEventListener("load", manualHealthCheckV12);
-</script>
-
-</body>
-</html>
+const OFFICERS=["Nguyễn Dũng", "Phương Đạt", "Công Cường", "Thiều Cường", "Phan Kiên", "Tùng Long", "Văn Tuấn", "Minh Khương", "Ngọc Chung", "Hoàng Hải", "Huyền Trang", "Văn Tiến", "Quang Hoàng", "Duy Thắng", "Lê Thuỷ"];let records=[],appUsername=localStorage.getItem("APP_USERNAME")||"",appPassword=localStorage.getItem("APP_PASSWORD")||"";
+function showTab(t){docsPanel.classList.toggle("hidden",t!=="docs");legalPanel.classList.toggle("hidden",t!=="legal");tabDocs.classList.toggle("active",t==="docs");tabLegal.classList.toggle("active",t==="legal");if(t==="legal")loadLegalDocs()}
+function authHeaders(h={}){if(appUsername)h["x-app-username"]=appUsername;if(appPassword)h["x-app-password"]=appPassword;return h}
+async function api(url,opt={}){const res=await fetch(url,{...opt,headers:authHeaders(opt.headers||{})});const data=await res.json().catch(()=>({}));if(res.status===401){loginBox.style.display="block";appMain.style.display="none";throw new Error(data.error||"Cần đăng nhập")}if(!res.ok)throw new Error(data.error||"Lỗi server");return data}
+function saveLogin(){appUsername=usernameInput.value.trim();appPassword=passwordInput.value.trim();localStorage.setItem("APP_USERNAME",appUsername);localStorage.setItem("APP_PASSWORD",appPassword);loginBox.style.display="none";appMain.style.display="block";init()}
+async function manualHealthCheck(){try{const r=await fetch("/api/health",{cache:"no-store"});const h=await r.json();status.innerText="Sẵn sàng.";serverStatus.innerText=`Server OK. OpenAI: ${h.hasOpenAI?"đã kết nối":"chưa có"}. Supabase: ${h.hasSupabase?"đã kết nối":"chưa có"}. Google Drive: ${h.hasGoogleDrive?"đã cấu hình":"chưa cấu hình"}.`;if(h.hasAuth&&!appUsername&&!appPassword){loginBox.style.display="block";appMain.style.display="none"}}catch(e){status.innerText="Không kiểm tra được server: "+e.message}}
+async function load(){records=await api("/api/records");render()}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function updateStats(){stTotal.innerText=records.length;stTodo.innerText=records.filter(r=>r.trang_thai==="Chưa xử lý").length;stDoing.innerText=records.filter(r=>r.trang_thai==="Đang xử lý").length;stDone.innerText=records.filter(r=>r.trang_thai==="Đã hoàn thành").length}
+function officerControls(r){const sel=OFFICERS.includes(r.can_bo||"")?r.can_bo:"";const custom=sel?"":(r.can_bo||"");return `<div class="officerRow"><select onchange="officerChanged(${r.id},this.value)"><option value="">Chọn cán bộ</option>${OFFICERS.map(o=>`<option ${sel===o?"selected":""}>${o}</option>`).join("")}<option value="__custom__" ${custom?"selected":""}>Khác / nhập tay</option></select><input value="${esc(custom)}" spellcheck="false" placeholder="Nhập tên khác" onblur="saveRow(${r.id})"></div>`}
+function officerChanged(id,val){const tr=document.querySelector(`tr[data-id="${id}"]`);if(!tr)return;const inp=tr.children[5].querySelector("input");if(val&&val!=="__custom__")inp.value="";saveRow(id)}
+function render(){const q=search.value.toLowerCase().trim(),st=statusFilter.value,of=officerFilter.value.toLowerCase();let arr=records.filter(r=>{const t=[r.so_hieu,r.ngay_ban_hanh,r.ngay_nhan,r.noi_dung,r.thoi_han,r.can_bo,r.trang_thai,r.ghi_chu].join(" ").toLowerCase();return(!q||t.includes(q))&&(!st||r.trang_thai===st)&&(!of||String(r.can_bo||"").toLowerCase().includes(of))});updateStats();tbody.innerHTML=arr.map((r,i)=>`<tr data-id="${r.id}"><td>${i+1}</td><td><div contenteditable spellcheck="false" onblur="saveRow(${r.id})"><b>${esc(r.so_hieu)}</b></div><div class="small">Ngày ban hành:</div><div contenteditable spellcheck="false" onblur="saveRow(${r.id})">${esc(r.ngay_ban_hanh)}</div></td><td contenteditable spellcheck="false" onblur="saveRow(${r.id})">${esc(r.ngay_nhan||"")}</td><td contenteditable spellcheck="false" onblur="saveRow(${r.id})">${esc(r.noi_dung)}</td><td contenteditable spellcheck="false" onblur="saveRow(${r.id})">${esc(r.thoi_han)}</td><td>${officerControls(r)}</td><td><select onchange="saveRow(${r.id})">${["Chưa xử lý","Đang xử lý","Đã hoàn thành","Quá hạn"].map(x=>`<option ${r.trang_thai===x?"selected":""}>${x}</option>`).join("")}</select></td><td contenteditable spellcheck="false" onblur="saveRow(${r.id})">${esc(r.ghi_chu)}</td><td><button class="light" onclick="askLegalFromRecord(${r.id})">Tra cứu</button></td><td><button class="danger" onclick="deleteRow(${r.id})">Xóa</button></td></tr>`).join("")||`<tr><td colspan="10">Chưa có dữ liệu.</td></tr>`}
+async function upload(){const fs=Array.from(files.files||[]);if(!fs.length)return alert("Chưa chọn file");let ok=0,fail=0,errs=[];for(let i=0;i<fs.length;i++){status.innerText=`Đang xử lý ${i+1}/${fs.length}: ${fs[i].name}`;progress.value=Math.round((i/fs.length)*100);const fd=new FormData();fd.append("file",fs[i]);try{const res=await fetch("/api/upload-one",{method:"POST",body:fd,headers:authHeaders()});const d=await res.json().catch(()=>({error:"Server không trả JSON"}));if(!res.ok){fail++;errs.push(`${fs[i].name}: ${d.error}`)}else ok++}catch(e){fail++;errs.push(`${fs[i].name}: ${e.message}`)}}progress.value=100;status.innerText=fail===0?`Đã phân tích xong ${ok} file.`:`Đã xong. Thành công: ${ok}. Lỗi: ${fail}\n${errs.join("\n")}`;files.value="";await load();setTimeout(()=>progress.value=0,1200)}
+async function saveRow(id){const tr=document.querySelector(`tr[data-id="${id}"]`),c=tr.children,ds=c[1].querySelectorAll("div"),sel=c[5].querySelector("select").value,custom=c[5].querySelector("input").value.trim();const data={so_hieu:ds[0].innerText.trim(),ngay_ban_hanh:ds[2].innerText.trim(),ngay_nhan:c[2].innerText.trim(),noi_dung:c[3].innerText.trim(),thoi_han:c[4].innerText.trim(),can_bo:(sel&&sel!=="__custom__")?sel:custom,trang_thai:c[6].querySelector("select").value,ghi_chu:c[7].innerText.trim()};await api("/api/records/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});const r=records.find(x=>String(x.id)===String(id));if(r)Object.assign(r,data);updateStats()}
+async function deleteRow(id){if(!confirm("Xóa dòng này?"))return;await api("/api/records/"+id,{method:"DELETE"});await load()}
+function exportCSV(){window.location.href="/api/export-csv"}
+async function importCSV(){const f=csvInput.files[0];if(!f)return alert("Chưa chọn CSV");const d=await api("/api/import-csv",{method:"POST",headers:{"Content-Type":"text/plain"},body:await f.text()});alert("Đã import "+(d.imported||0)+" dòng");csvInput.value="";await load()}
+function clearFilters(){search.value="";statusFilter.value="";officerFilter.value="";render()}
+async function syncLegal(){legalStatus.innerText="Đang đồng bộ Google Drive...";try{const d=await api("/api/legal/sync",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});legalStatus.innerText=`Đồng bộ xong. Tổng: ${d.total}. Thành công: ${d.synced}. Bỏ qua: ${d.skipped}.`+(d.errors?.length?`\nLỗi:\n${d.errors.join("\n")}`:"");await loadLegalDocs()}catch(e){legalStatus.innerText="Lỗi đồng bộ: "+e.message}}
+async function loadLegalDocs(){try{const docs=await api("/api/legal/docs");legalDocs.innerHTML=docs.length?docs.map(d=>`<div class="source"><b>${esc(d.title)}</b><br><span>${esc(d.category||"Khác")}</span><br><span class="small">${esc(d.text_length||0)} ký tự</span><br>${d.source_url?`<a href="${esc(d.source_url)}" target="_blank">Mở nguồn</a>`:""}</div>`).join(""):"Chưa có tài liệu."}catch(e){legalDocs.innerText="Không tải được: "+e.message}}
+async function askLegal(){const q=legalQuestion.value.trim();if(!q)return alert("Chưa nhập câu hỏi");legalAnswer.innerText="Đang tra cứu...";legalSources.innerHTML="";try{const d=await api("/api/legal/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,category:legalCategory.value})});showLegal(d)}catch(e){legalAnswer.innerText="Lỗi: "+e.message}}
+async function askLegalFromRecord(id){showTab("legal");legalAnswer.innerText="Đang tra cứu từ văn bản đến...";try{const d=await api("/api/legal/ask-record/"+id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({category:legalCategory.value||"Tất cả"})});legalQuestion.value=d.question||"";showLegal(d)}catch(e){legalAnswer.innerText="Lỗi: "+e.message}}
+function showLegal(d){legalAnswer.innerText=d.answer||"";legalSources.innerHTML=(d.sources||[]).map((s,i)=>`<div class="source"><b>Nguồn ${i+1}: ${esc(s.doc_title)}</b><br><span>${esc(s.category||"Khác")}</span><br>${s.source_url?`<a href="${esc(s.source_url)}" target="_blank">Mở tài liệu gốc</a><br>`:""}<span class="small">Điểm: ${s.score}</span><br>${esc((s.content||"").slice(0,600))}...</div>`).join("")||"Không có nguồn."}
+async function init(){await manualHealthCheck();await load()}init();
+</script></body></html>
