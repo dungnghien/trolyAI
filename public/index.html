@@ -150,11 +150,11 @@ function render(){
   document.getElementById("tbody").innerHTML = filtered.map((r,i)=>`
     <tr data-id="${r.id}">
       <td>${i+1}</td>
-      <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.so_hieu)}</td>
+      <td contenteditable="true" spellcheck="false" onblur="saveRow(${r.id})">${escapeHtml(r.so_hieu)}</td>
       <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.ngay_ban_hanh)}</td>
       <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.noi_dung)}</td>
       <td contenteditable="true" onblur="saveRow(${r.id})">${escapeHtml(r.thoi_han)}</td>
-      <td><input list="officerList" value="${escapeHtml(r.can_bo)}" onchange="saveRow(${r.id})" onblur="saveRow(${r.id})" placeholder="Chọn hoặc nhập tên"></td>
+      <td><input list="officerList" spellcheck="false" value="${escapeHtml(r.can_bo)}" onchange="saveRow(${r.id})" onblur="saveRow(${r.id})" placeholder="Chọn hoặc nhập tên"></td>
       <td>
         <select onchange="saveRow(${r.id})">
           ${["Chưa xử lý","Đang xử lý","Đã hoàn thành","Quá hạn"].map(x=>`<option ${r.trang_thai===x?"selected":""}>${x}</option>`).join("")}
