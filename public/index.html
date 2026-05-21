@@ -183,8 +183,8 @@ async function upload(){
 
   try{
     const health = await checkHealth();
-    if(!health.hasApiKey){
-      document.getElementById("status").innerText = "Server chưa có OPENAI_API_KEY. Hãy đặt Environment Variable trên Render.";
+    if(!healt(h.hasOpenAI || h.hasApiKey)){
+      document.getElementById("status").innerText = "Đang kiểm tra kết nối AI...";
       return;
     }
   }catch(err){
@@ -282,5 +282,115 @@ load().catch(err=>{
   document.getElementById("status").innerText = "Không tải được dữ liệu: " + err.message;
 });
 </script>
+
+<script>
+// V11: tương thích cả tên cũ hasApiKey và tên mới hasOpenAI
+async function v11CheckHealthBanner(){
+  try{
+    const res = await fetch("/api/health", {cache:"no-store"});
+    const h = await res.json();
+    const hasOpenAI = !!(h.hasOpenAI || h.hasApiKey);
+    const hasSupabase = !!h.hasSupabase;
+    const statusEl = document.getElementById("status");
+    const serverEl = document.getElementById("serverStatus");
+    const msg = "Server OK. OpenAI: " + (hasOpenAI ? "đã kết nối" : "chưa có") + ". Supabase: " + (hasSupabase ? "đã kết nối" : "chưa có") + ".";
+    if(serverEl) serverEl.innerText = msg;
+    if(statusEl && statusEl.innerText.includes("OPENAI_API_KEY") && hasOpenAI) statusEl.innerText = "Sẵn sàng. " + msg;
+  }catch(e){}
+}
+window.addEventListener("load", v11CheckHealthBanner);
+</script>
+
+
+<script>
+/* V12 force-fix: chỉ dùng hasOpenAI từ /api/health, không dùng hasApiKey cũ */
+async function checkHealthV12() {
+  const res = await fetch("/api/health", { cache: "no-store" });
+  if (!res.ok) throw new Error("Không gọi được /api/health: HTTP " + res.status);
+  const h = await res.json();
+  return h;
+}
+
+async function manualHealthCheckV12() {
+  const statusEl = document.getElementById("status");
+  const serverEl = document.getElementById("serverStatus");
+  try {
+    const h = await checkHealthV12();
+    const msg = "Server OK. OpenAI: " + (h.hasOpenAI ? "đã kết nối" : "chưa có") +
+      ". Supabase: " + (h.hasSupabase ? "đã kết nối" : "chưa có") + ".";
+    if (statusEl) statusEl.innerText = msg;
+    if (serverEl) serverEl.innerText = msg;
+    return h;
+  } catch (e) {
+    const msg = "Không kiểm tra được server: " + e.message;
+    if (statusEl) statusEl.innerText = msg;
+    if (serverEl) serverEl.innerText = msg;
+    throw e;
+  }
+}
+
+// Ghi đè hàm upload cũ nếu tồn tại
+window.upload = async function uploadV12() {
+  const filesInput = document.getElementById("files");
+  const files = Array.from(filesInput?.files || []);
+  const statusEl = document.getElementById("status");
+  const progressEl = document.getElementById("progress");
+
+  if (!files.length) return alert("Chưa chọn file.");
+
+  let health;
+  try {
+    health = await checkHealthV12();
+  } catch (e) {
+    if (statusEl) statusEl.innerText = "Không kết nối được server: " + e.message;
+    return;
+  }
+
+  if (!health.hasOpenAI) {
+    if (statusEl) statusEl.innerText = "Server chưa nhận OPENAI_API_KEY. Vào Render > Environment kiểm tra OPENAI_API_KEY, Save Changes rồi Manual Deploy.";
+    return;
+  }
+
+  if (!health.hasSupabase) {
+    if (statusEl) statusEl.innerText = "Server chưa nhận SUPABASE_ANON_KEY hoặc SUPABASE_URL.";
+    return;
+  }
+
+  let ok = 0, fail = 0;
+  const errors = [];
+  if (progressEl) progressEl.value = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (statusEl) statusEl.innerText = `Đang xử lý ${i + 1}/${files.length}: ${file.name}`;
+    if (progressEl) progressEl.value = Math.round((i / files.length) * 100);
+
+    const fd = new FormData();
+    fd.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload-one", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({ error: "Server không trả JSON" }));
+      if (!res.ok) {
+        fail++;
+        errors.push(`${file.name}: ${data.error || "Không rõ lỗi"}`);
+      } else {
+        ok++;
+      }
+    } catch (e) {
+      fail++;
+      errors.push(`${file.name}: ${e.message}`);
+    }
+  }
+
+  if (progressEl) progressEl.value = 100;
+  if (statusEl) statusEl.innerText = `Hoàn thành.\nThành công: ${ok}\nLỗi: ${fail}` + (errors.length ? "\n" + errors.join("\n") : "");
+  if (filesInput) filesInput.value = "";
+  if (typeof load === "function") await load();
+};
+
+window.addEventListener("load", manualHealthCheckV12);
+</script>
+
 </body>
 </html>
